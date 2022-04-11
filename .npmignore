@@ -1,0 +1,21 @@
+*.ts
+!*.d.ts
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# GitHub
+.github/workflows
+
+# Jest
+coverage
+
+# jsii
+dist
+!.jsii
+
+# STK CLI
+.template
+stages
+stk.yaml
