@@ -10,6 +10,8 @@
 
 Component to manage an API Gateway.
 
+> It is mandatory to add at least one integration.
+
 ## How to use
 
 Below are all languages supported by the AWS CDK.
@@ -139,10 +141,22 @@ export class MyStack extends Stack {
 | apiKeyDescription? | string | The description of the API key. |
 | apiKeyName         | string | The name of the API key.        |
 
+### KinesisDataStreamIntegrationProps
+
+| Name              | Type    | Description                                                                             |
+| ----------------- | ------- | --------------------------------------------------------------------------------------- |
+| apiKeyRequired?   | boolean | Indicates whether the method requires clients to submit a valid API key. Default: true. |
+| iamAuthorization? | boolean | Represents whether to use IAM authentication or not. Default: false.                    |
+| kinesisArn        | string  | The ARN of the Kinesis for the integration.                                             |
+| method            | string  | The method for the resource (path).                                                     |
+| path              | string  | The path for the integration.                                                           |
+| policy            | string  | The policy for the integration.                                                         |
+
 ### StageProps
 
 | Name                  | Type                                                          | Description                                                              |
 | --------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| clientCertificate?    | boolean                                                       | The client certificate for the stage. Default: true.                     |
 | logLevel?             | [MethodLoggingLevel][aws-cdk-apigateway-method-logging-level] | The log level of the stage. Default: MethodLoggingLevel.ERROR.           |
 | metricsEnabled?       | boolean                                                       | Specifies whether Amazon CloudWatch metrics are enabled. Default: false. |
 | stageName             | string                                                        | The name of the stage.                                                   |
@@ -159,10 +173,11 @@ export class MyStack extends Stack {
 
 ## Methods
 
-| Name             | Description                       |
-| ---------------- | --------------------------------- |
-| addApiKey(props) | Add a API key in AWS API Gateway. |
-| addStage(props)  | Add a stage to the REST API.      |
+| Name                                   | Description                                          |
+| -------------------------------------- | ---------------------------------------------------- |
+| addApiKey(props)                       | Add a API key in AWS API Gateway.                    |
+| addIntegrationKinesisDataStream(props) | Add Kinesis Data Stream integration to the REST API. |
+| addStage(props)                        | Add a stage to the REST API.                         |
 
 ### addApiKey(props)
 
@@ -181,6 +196,18 @@ _Returns_
 Add a API key in AWS API Gateway.
 
 You can use this method to add as many API keys as you like.
+
+### addIntegrationKinesisDataStream(props)
+
+```typescript
+public addIntegrationKinesisDataStream(props: KinesisDataStreamIntegrationProps)
+```
+
+_Parameters_
+
+- **props** [KinesisDataStreamIntegrationProps](#kinesisdatastreamintegrationprops)
+
+Add Kinesis Data Stream integration to the REST API.
 
 ### addStage(props)
 

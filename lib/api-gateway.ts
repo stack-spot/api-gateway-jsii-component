@@ -1,6 +1,9 @@
 import {
   ApiKey,
   ApiKeySourceType,
+  AuthorizationType,
+  AwsIntegration,
+  CfnClientCertificate,
   CorsOptions,
   Deployment,
   EndpointType,
@@ -8,7 +11,7 @@ import {
   RestApi,
   Stage,
 } from 'aws-cdk-lib/aws-apigateway';
-import { PolicyDocument } from 'aws-cdk-lib/aws-iam';
+import { AnyPrincipal, PolicyDocument, Role } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
 /**
@@ -57,9 +60,55 @@ export interface ApiKeyProps {
 }
 
 /**
+ * Kinesis integration props.
+ */
+export interface KinesisDataStreamIntegrationProps {
+  /**
+   * Indicates whether the method requires clients to submit a valid API key.
+   *
+   * @default true
+   */
+  readonly apiKeyRequired?: boolean;
+
+  /**
+   * Represents whether to use IAM authentication or not.
+   *
+   * @default false
+   */
+  readonly iamAuthorization?: boolean;
+
+  /**
+   * The ARN of the Kinesis for the integration.
+   */
+  readonly kinesisArn: string;
+
+  /**
+   * The method for the resource (path).
+   */
+  readonly method: string;
+
+  /**
+   * The path for the integration.
+   */
+  readonly path: string;
+
+  /**
+   * The policy for the integration.
+   */
+  readonly policy: string;
+}
+
+/**
  * Stages props.
  */
 export interface StageProps {
+  /**
+   * The client certificate for the stage.
+   *
+   * @default true
+   */
+  readonly clientCertificate?: boolean;
+
   /**
    * The log level of the stage.
    *
@@ -167,16 +216,85 @@ export class ApiGateway extends Construct {
   }
 
   /**
+   * Add Kinesis Data Stream integration to the REST API.
+   *
+   * @param {KinesisDataStreamIntegrationProps} props The props for Kinesis Data Stream integration.
+   */
+  public addIntegrationKinesisDataStream(
+    props: KinesisDataStreamIntegrationProps
+  ): void {
+    const credentialsRole = new Role(
+      this,
+      `RestApi${this.restApi.restApiName}RoleKinesisDataStream${
+        props.method + props.path
+      }`,
+      {
+        assumedBy: new AnyPrincipal(),
+        description: `Role for ${this.restApi.restApiName} REST API in ${props.path} path with ${props.method} method.`,
+        inlinePolicies: {
+          DefaultPoliy: PolicyDocument.fromJson(JSON.parse(props.policy)),
+        },
+        roleName: `RestApi${
+          this.restApi.restApiName +
+          props.method +
+          props.path.replace(/\//g, '')
+        }Role`,
+      }
+    );
+
+    const resource = this.restApi.root.resourceForPath(props.path);
+
+    resource.addMethod(
+      props.method,
+      new AwsIntegration({
+        options: { credentialsRole },
+        path: props.kinesisArn,
+        service: 'kinesis',
+      }),
+      {
+        apiKeyRequired:
+          typeof props.apiKeyRequired === 'boolean'
+            ? props.apiKeyRequired
+            : true,
+        authorizationType: props.iamAuthorization
+          ? AuthorizationType.IAM
+          : AuthorizationType.NONE,
+        methodResponses: [{ statusCode: '204' }],
+      }
+    );
+  }
+
+  /**
    * Add a stage to the REST API.
    *
    * @param {StageProps} props The props of the stage.
    * @returns {Stage} The stage to create.
    */
   public addStage(props: StageProps): Stage {
+    let clientCertificateId: string | undefined;
+
+    const clientCertificate =
+      typeof props.clientCertificate === 'boolean'
+        ? props.clientCertificate
+        : true;
+
+    if (clientCertificate) {
+      const cfnClientCertificate = new CfnClientCertificate(
+        this,
+        `RestApi${this.restApi.restApiName}Stage${props.stageName}Certificate`,
+        {
+          description: `${this.restApi.restApiName} ${props.stageName} client certificate`,
+        }
+      );
+
+      clientCertificateId = cfnClientCertificate.attrClientCertificateId;
+    }
+
     return new Stage(
       this,
       `RestApi${this.restApi.restApiName}Stage${props.stageName}`,
       {
+        clientCertificateId,
         deployment: this.deployment,
         description: `The ${props.stageName.toLowerCase()} stage for ${
           this.restApi.restApiName
