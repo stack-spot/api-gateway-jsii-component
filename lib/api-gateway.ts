@@ -7,11 +7,13 @@ import {
   CorsOptions,
   Deployment,
   EndpointType,
+  LambdaIntegration,
   MethodLoggingLevel,
   RestApi,
   Stage,
 } from 'aws-cdk-lib/aws-apigateway';
 import { AnyPrincipal, PolicyDocument, Role } from 'aws-cdk-lib/aws-iam';
+import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
 /**
@@ -60,7 +62,7 @@ export interface ApiKeyProps {
 }
 
 /**
- * Kinesis integration props.
+ * Kinesis Data Stream integration props.
  */
 export interface KinesisDataStreamIntegrationProps {
   /**
@@ -96,6 +98,40 @@ export interface KinesisDataStreamIntegrationProps {
    * The policy for the integration.
    */
   readonly policy: string;
+}
+
+/**
+ * Lambda integration props.
+ */
+export interface LambdaIntegrationProps {
+  /**
+   * Indicates whether the method requires clients to submit a valid API key.
+   *
+   * @default true
+   */
+  readonly apiKeyRequired?: boolean;
+
+  /**
+   * Represents whether to use IAM authentication or not.
+   *
+   * @default false
+   */
+  readonly iamAuthorization?: boolean;
+
+  /**
+   * The function for the integration.
+   */
+  readonly fn: IFunction;
+
+  /**
+   * The method for the resource (path).
+   */
+  readonly method: string;
+
+  /**
+   * The path for the integration.
+   */
+  readonly path: string;
 }
 
 /**
@@ -259,9 +295,25 @@ export class ApiGateway extends Construct {
         authorizationType: props.iamAuthorization
           ? AuthorizationType.IAM
           : AuthorizationType.NONE,
-        methodResponses: [{ statusCode: '204' }],
       }
     );
+  }
+
+  /**
+   * Add Lambda integration to the REST API.
+   *
+   * @param {LambdaIntegrationProps} props The props for Lambda integration.
+   */
+  public addIntegrationLambda(props: LambdaIntegrationProps): void {
+    const resource = this.restApi.root.resourceForPath(props.path);
+
+    resource.addMethod(props.method, new LambdaIntegration(props.fn), {
+      apiKeyRequired:
+        typeof props.apiKeyRequired === 'boolean' ? props.apiKeyRequired : true,
+      authorizationType: props.iamAuthorization
+        ? AuthorizationType.IAM
+        : AuthorizationType.NONE,
+    });
   }
 
   /**

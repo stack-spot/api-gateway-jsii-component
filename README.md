@@ -152,6 +152,16 @@ export class MyStack extends Stack {
 | path              | string  | The path for the integration.                                                           |
 | policy            | string  | The policy for the integration.                                                         |
 
+### LambdaIntegrationProps
+
+| Name              | Type                                  | Description                                                                             |
+| ----------------- | ------------------------------------- | --------------------------------------------------------------------------------------- |
+| apiKeyRequired?   | boolean                               | Indicates whether the method requires clients to submit a valid API key. Default: true. |
+| iamAuthorization? | boolean                               | Represents whether to use IAM authentication or not. Default: false.                    |
+| fn                | [IFunction][aws-cdk-lambda-ifunction] | The function for the integration.                                                       |
+| method            | string                                | The method for the resource (path).                                                     |
+| path              | string                                | The path for the integration.                                                           |
+
 ### StageProps
 
 | Name                  | Type                                                          | Description                                                              |
@@ -177,6 +187,7 @@ export class MyStack extends Stack {
 | -------------------------------------- | ---------------------------------------------------- |
 | addApiKey(props)                       | Add a API key in AWS API Gateway.                    |
 | addIntegrationKinesisDataStream(props) | Add Kinesis Data Stream integration to the REST API. |
+| addIntegrationLambda(props)            | Add Lambda integration to the REST API.              |
 | addStage(props)                        | Add a stage to the REST API.                         |
 
 ### addApiKey(props)
@@ -208,6 +219,18 @@ _Parameters_
 - **props** [KinesisDataStreamIntegrationProps](#kinesisdatastreamintegrationprops)
 
 Add Kinesis Data Stream integration to the REST API.
+
+### addIntegrationLambda(props)
+
+```typescript
+public addIntegrationLambda(props: LambdaIntegrationProps)
+```
+
+_Paremeters_
+
+- **props** [LambdaIntegrationProps](#lambdaintegrationprops)
+
+Add Lambda integration to the REST API.
 
 ### addStage(props)
 
@@ -279,6 +302,7 @@ npm install
 [aws-cdk-apigateway-method-logging-level]: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_apigateway.MethodLoggingLevel.html
 [aws-cdk-apigateway-rest-api]: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_apigateway.RestApi.html
 [aws-cdk-apigateway-stage]: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_apigateway.Stage.html
+[aws-cdk-lambda-ifunction]: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda.IFunction.html
 [badge-aws-cdk]: https://img.shields.io/github/package-json/dependency-version/stack-spot/api-gateway-jsii-component/dev/aws-cdk-lib
 [badge-jsii]: https://img.shields.io/github/package-json/dependency-version/stack-spot/api-gateway-jsii-component/dev/jsii
 [badge-license]: https://img.shields.io/github/license/stack-spot/api-gateway-jsii-component

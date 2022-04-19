@@ -882,6 +882,226 @@ describe('ApiGateway', () => {
     });
   });
 
+  test('creates resources for lambda integration', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    template.resourceCountIs('AWS::ApiGateway::Resource', 2);
+
+    template.hasResourceProperties('AWS::ApiGateway::Resource', {
+      PathPart: 'test',
+    });
+
+    template.hasResourceProperties('AWS::ApiGateway::Resource', {
+      PathPart: 'lambda',
+    });
+  });
+
+  test('creates lambda integration with correct method', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::ApiGateway::Method', {
+      HttpMethod: 'GET',
+    });
+  });
+
+  test('creates lambda integration with api key enabled by default', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::ApiGateway::Method', {
+      ApiKeyRequired: true,
+    });
+  });
+
+  test('creates lambda integration with api key enabled', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      apiKeyRequired: true,
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::ApiGateway::Method', {
+      ApiKeyRequired: true,
+    });
+  });
+
+  test('creates lambda integration with api key disabled', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      apiKeyRequired: false,
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    const method = template.findResources('AWS::ApiGateway::Method');
+    const methodParameter = Object.keys(method)[0];
+    const properties = method[methodParameter].Properties;
+
+    expect(properties).not.toContain('ApiKeyRequired');
+  });
+
+  test('creates lambda integration with api key disabled by default', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::ApiGateway::Method', {
+      AuthorizationType: 'NONE',
+    });
+  });
+
+  test('creates lambda integration with api key enabled', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      iamAuthorization: true,
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::ApiGateway::Method', {
+      AuthorizationType: 'AWS_IAM',
+    });
+  });
+
+  test('creates lambda integration with api key disabled', () => {
+    const app = new App();
+    const stack = new Stack(app, 'TestStack');
+    const apiGateway = new ApiGateway(stack, 'TestConstruct', {
+      endpointTypes: [EndpointType.PRIVATE],
+      restApiName: 'TestRestApi',
+    });
+    const fn = new Function(stack, 'TestFunction', {
+      code: Code.fromInline(`exports.handler = async (event: any) => {
+        JSON.stringify(event, null, 2);
+      };`),
+      handler: 'index.handler',
+      runtime: Runtime.NODEJS_14_X,
+    });
+    apiGateway.addIntegrationLambda({
+      iamAuthorization: false,
+      fn,
+      method: 'GET',
+      path: '/test/lambda',
+    });
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::ApiGateway::Method', {
+      AuthorizationType: 'NONE',
+    });
+  });
+
   test('creates stage in the rest api', () => {
     const app = new App();
     const stack = new Stack(app, 'TestStack');
